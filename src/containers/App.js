@@ -1,9 +1,11 @@
-import React, { PropTypes } from 'react';
-import { bindActionCreators } from 'redux';
-import { connect } from 'react-redux';
-import Header from '../components/Header';
-import MainSection from '../components/MainSection';
-import * as TodoActions from '../actions';
+import React from "react";
+import PropTypes from "prop-types";
+
+import { bindActionCreators } from "redux";
+import { connect } from "react-redux";
+import Header from "../components/Header";
+import MainSection from "../components/MainSection";
+import * as TodoActions from "../actions";
 
 const App = ({ todos, actions }) => (
   <div className="todoapp">
@@ -17,11 +19,11 @@ App.propTypes = {
   actions: PropTypes.object.isRequired,
 };
 
-const mapStateToProps = state => ({
+const mapStateToProps = (state) => ({
   todos: state.todos,
 });
 
-const mapDispatchToProps = dispatch => ({
+const mapDispatchToProps = (dispatch) => ({
   actions: bindActionCreators(TodoActions, dispatch),
 });
 

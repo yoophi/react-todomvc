@@ -1,86 +1,91 @@
-import React, { Component, PropTypes } from "react";
-import TodoItem from "./TodoItem";
-import Footer from "./Footer";
+import React, { useCallback, useState } from "react";
 import {
+  SHOW_ACTIVE,
   SHOW_ALL,
   SHOW_COMPLETED,
-  SHOW_ACTIVE
 } from "../constants/TodoFilters";
+
+import Footer from "./Footer";
+import PropTypes from "prop-types";
+import TodoItem from "./TodoItem";
 
 const TODO_FILTERS = {
   [SHOW_ALL]: () => true,
-  [SHOW_ACTIVE]: todo => !todo.completed,
-  [SHOW_COMPLETED]: todo => todo.completed
+  [SHOW_ACTIVE]: (todo) => !todo.completed,
+  [SHOW_COMPLETED]: (todo) => todo.completed,
 };
 
-export default class MainSection extends Component {
-  static propTypes = {
-    todos: PropTypes.array.isRequired,
-    actions: PropTypes.object.isRequired
-  };
+const MainSection = ({ todos, actions }) => {
+  const [filter, setFilter] = useState(SHOW_ALL);
 
-  state = { filter: SHOW_ALL };
+  const handleClearCompleted = useCallback(() => {
+    actions.clearCompleted();
+  }, [actions]);
 
-  handleClearCompleted = () => {
-    this.props.actions.clearCompleted();
-  };
+  const handleShow = useCallback(
+    (filter) => {
+      setFilter(filter);
+    },
+    [setFilter]
+  );
 
-  handleShow = filter => {
-    this.setState({ filter });
-  };
+  const renderToggleAll = useCallback(
+    (completedCount) => {
+      if (todos.length > 0) {
+        return (
+          <input
+            className="toggle-all"
+            type="checkbox"
+            checked={completedCount === todos.length}
+            onChange={actions.completeAll}
+          />
+        );
+      }
+    },
+    [todos, actions]
+  );
 
-  renderToggleAll(completedCount) {
-    const { todos, actions } = this.props;
-    if (todos.length > 0) {
-      return (
-        <input
-          className="toggle-all"
-          type="checkbox"
-          checked={completedCount === todos.length}
-          onChange={actions.completeAll}
-        />
-      );
-    }
-  }
+  const renderFooter = useCallback(
+    (completedCount) => {
+      const activeCount = todos.length - completedCount;
 
-  renderFooter(completedCount) {
-    const { todos } = this.props;
-    const { filter } = this.state;
-    const activeCount = todos.length - completedCount;
+      if (todos.length) {
+        return (
+          <Footer
+            completedCount={completedCount}
+            activeCount={activeCount}
+            filter={filter}
+            onClearCompleted={handleClearCompleted}
+            onShow={handleShow}
+          />
+        );
+      }
+    },
+    [todos, filter, handleClearCompleted, handleShow]
+  );
 
-    if (todos.length) {
-      return (
-        <Footer
-          completedCount={completedCount}
-          activeCount={activeCount}
-          filter={filter}
-          onClearCompleted={this.handleClearCompleted}
-          onShow={this.handleShow}
-        />
-      );
-    }
-  }
+  const filteredTodos = todos.filter(TODO_FILTERS[filter]);
+  const completedCount = todos.reduce(
+    (count, todo) => (todo.completed ? count + 1 : count),
+    0
+  );
 
-  render() {
-    const { todos, actions } = this.props;
-    const { filter } = this.state;
+  return (
+    <section className="main">
+      {renderToggleAll(completedCount)}
+      <ul className="todo-list">
+        {filteredTodos.map((todo) => (
+          <TodoItem key={todo.id} todo={todo} {...actions} />
+        ))}
+      </ul>
+      {renderFooter(completedCount)}
+    </section>
+  );
+};
 
-    const filteredTodos = todos.filter(TODO_FILTERS[filter]);
-    const completedCount = todos.reduce(
-      (count, todo) => todo.completed ? count + 1 : count,
-      0
-    );
+MainSection.propTypes = {
+  todos: PropTypes.array.isRequired,
+  actions: PropTypes.object.isRequired,
+};
 
-    return (
-      <section className="main">
-        {this.renderToggleAll(completedCount)}
-        <ul className="todo-list">
-          {filteredTodos.map(todo => (
-            <TodoItem key={todo.id} todo={todo} {...actions} />
-          ))}
-        </ul>
-        {this.renderFooter(completedCount)}
-      </section>
-    );
-  }
-}
+export default MainSection;

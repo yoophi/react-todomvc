@@ -1,70 +1,68 @@
-import React, { Component, PropTypes } from "react";
-import classnames from "classnames";
+import React, { useCallback, useState } from "react";
+
+import PropTypes from "prop-types";
 import TodoTextInput from "./TodoTextInput";
+import classnames from "classnames";
 
-export default class TodoItem extends Component {
-  static propTypes = {
-    todo: PropTypes.object.isRequired,
-    editTodo: PropTypes.func.isRequired,
-    deleteTodo: PropTypes.func.isRequired,
-    completeTodo: PropTypes.func.isRequired
-  };
+const TodoItem = ({ todo, editTodo, deleteTodo, completeTodo }) => {
+  const [editing, setEditing] = useState(false);
 
-  state = {
-    editing: false
-  };
+  const handleDoubleClick = useCallback(() => {
+    setEditing(true);
+  }, [setEditing]);
 
-  handleDoubleClick = () => {
-    this.setState({ editing: true });
-  };
+  const handleSave = useCallback(
+    (id, text) => {
+      if (text.length === 0) {
+        deleteTodo(id);
+      } else {
+        editTodo(id, text);
+      }
+      setEditing(false);
+    },
+    [deleteTodo, editTodo, setEditing]
+  );
 
-  handleSave = (id, text) => {
-    if (text.length === 0) {
-      this.props.deleteTodo(id);
-    } else {
-      this.props.editTodo(id, text);
-    }
-    this.setState({ editing: false });
-  };
-
-  render() {
-    const { todo, completeTodo, deleteTodo } = this.props;
-
-    let element;
-    if (this.state.editing) {
-      element = (
-        <TodoTextInput
-          text={todo.text}
-          editing={this.state.editing}
-          onSave={text => this.handleSave(todo.id, text)}
+  let element;
+  if (editing) {
+    element = (
+      <TodoTextInput
+        text={todo.text}
+        editing={editing}
+        onSave={(text) => handleSave(todo.id, text)}
+      />
+    );
+  } else {
+    element = (
+      <div className="view">
+        <input
+          className="toggle"
+          type="checkbox"
+          checked={todo.completed}
+          onChange={() => completeTodo(todo.id)}
         />
-      );
-    } else {
-      element = (
-        <div className="view">
-          <input
-            className="toggle"
-            type="checkbox"
-            checked={todo.completed}
-            onChange={() => completeTodo(todo.id)}
-          />
-          <label onDoubleClick={this.handleDoubleClick}>
-            {todo.text}
-          </label>
-          <button className="destroy" onClick={() => deleteTodo(todo.id)} />
-        </div>
-      );
-    }
-
-    return (
-      <li
-        className={classnames({
-          completed: todo.completed,
-          editing: this.state.editing
-        })}
-      >
-        {element}
-      </li>
+        <label onDoubleClick={handleDoubleClick}>{todo.text}</label>
+        <button className="destroy" onClick={() => deleteTodo(todo.id)} />
+      </div>
     );
   }
-}
+
+  return (
+    <li
+      className={classnames({
+        completed: todo.completed,
+        editing: editing,
+      })}
+    >
+      {element}
+    </li>
+  );
+};
+TodoItem.propTypes = {
+  todo: PropTypes.object.isRequired,
+  editTodo: PropTypes.func.isRequired,
+  deleteTodo: PropTypes.func.isRequired,
+  completeTodo: PropTypes.func.isRequired,
+};
+
+export default TodoItem;
